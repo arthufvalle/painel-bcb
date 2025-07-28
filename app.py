@@ -2,19 +2,21 @@ import streamlit as st
 import pandas as pd
 import requests
 
-# Configuração do painel
+# Configuração inicial
 st.set_page_config(page_title="Painel Macroeconômico - BCB", layout="wide")
 st.title("📊 Painel Macroeconômico - Banco Central do Brasil")
 
 # Função para puxar séries do SGS (Banco Central)
 def get_bcb_series(codigo, nome):
     url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json"
+    headers = {"User-Agent": "Mozilla/5.0"}  # força aceitação no Streamlit Cloud
+
     try:
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()  # gera erro se a resposta não for 200
+        r = requests.get(url, headers=headers, timeout=15)
+        r.raise_for_status()
         data = r.json()
 
-        # Garantir que data é uma lista e contém registros
+        # Validar retorno
         if not isinstance(data, list) or len(data) == 0:
             return pd.DataFrame(columns=[nome])
 
@@ -40,7 +42,7 @@ series_dict = {
     "Câmbio (R$/US$)": 3697
 }
 
-# Seletor de série
+# Caixa de seleção
 opcao = st.selectbox("Selecione a série", list(series_dict.keys()))
 
 # Puxar dados
@@ -49,9 +51,12 @@ df = get_bcb_series(series_dict[opcao], opcao)
 # Mostrar resultados
 if not df.empty:
     st.line_chart(df)
+
     st.subheader("📌 Últimos Dados")
     st.write(df.tail(5))
+
     st.metric(opcao, f"{df.iloc[-1,0]:.2f}")
 else:
     st.warning("⚠️ Não foi possível carregar dados desta série no momento. Tente novamente mais tarde.")
+
 
