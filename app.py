@@ -3,11 +3,13 @@ import pandas as pd
 import requests
 from datetime import datetime, timedelta
 
+# Configuração inicial
 st.set_page_config(page_title="Painel Macroeconômico - BCB", layout="wide")
 st.title("📊 Painel Macroeconômico - Banco Central do Brasil")
 
+# Função para puxar séries do SGS (Banco Central)
 def get_bcb_series(codigo, nome):
-    # Definir data inicial = hoje - 10 anos
+    # Janela de 10 anos para evitar erro 406
     data_final = datetime.today().strftime("%d/%m/%Y")
     data_inicial = (datetime.today() - timedelta(days=365*10)).strftime("%d/%m/%Y")
     
@@ -37,8 +39,13 @@ def get_bcb_series(codigo, nome):
 # Séries do Banco Central (códigos SGS)
 series_dict = {
     "Selic Meta (%)": 432,
-    "IPCA (%)": 433,
-    "Câmbio (R$/US$)": 3697
+    "Inflação 12 meses (IPCA)": 4449,
+    "Câmbio (R$/US$)": 3697,
+    "Consignado - Setor Privado": 21116,
+    "Consignado - Setor Público": 21117,
+    "Consignado - INSS": 21118,
+    "Inadimplência - Pessoa Física": 21112,
+    "Inadimplência - Crédito Pessoal": 21114
 }
 
 # Seletor de série
