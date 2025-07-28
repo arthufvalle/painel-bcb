@@ -1,14 +1,17 @@
 import streamlit as st
 import pandas as pd
 import requests
+from datetime import datetime, timedelta
 
-# Configuração inicial do app
 st.set_page_config(page_title="Painel Macroeconômico - BCB", layout="wide")
 st.title("📊 Painel Macroeconômico - Banco Central do Brasil")
 
-# Função para puxar séries do SGS (Banco Central)
 def get_bcb_series(codigo, nome):
-    url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json"
+    # Definir data inicial = hoje - 10 anos
+    data_final = datetime.today().strftime("%d/%m/%Y")
+    data_inicial = (datetime.today() - timedelta(days=365*10)).strftime("%d/%m/%Y")
+    
+    url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json&dataInicial={data_inicial}&dataFinal={data_final}"
     headers = {"User-Agent": "Mozilla/5.0"}
 
     try:
