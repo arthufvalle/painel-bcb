@@ -1,37 +1,44 @@
 import streamlit as st
 import pandas as pd
-import pandas_datareader.data as web
-from datetime import datetime
+import requests
 
-# Configuração inicial
 st.set_page_config(page_title="Painel Macroeconômico - BCB", layout="wide")
 st.title("📊 Painel Macroeconômico - Banco Central do Brasil")
 
-# Função para puxar séries do SGS via pandas_datareader
-def get_bcb_series(codigo, nome):
+def get_bcb_series(codigo, nome, start="01/01/2000"):
+    url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json&dataInicial={start}&dataFinal=31/12/2099"
+    headers = {"User-Agent": "Mozilla/5.0"}  # para evitar erro 406
+    
     try:
-        start = datetime(2000, 1, 1)  # início da série
-        df = web.DataReader(f"SGS{codigo}", "sgs", start)
-        df = df.rename(columns={f"SGS{codigo}": nome})
+        r = requests.get(url, headers=headers, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        
+        if not isinstance(data, list) or len(data) == 0:
+            return pd.DataFrame(columns=[nome])
+        
+        df = pd.DataFrame(data)
+        df['data'] = pd.to_datetime(df['data'], dayfirst=True, errors="coerce")
+        df['valor'] = pd.to_numeric(df['valor'], errors="coerce")
+        df = df.dropna()
+        df = df.set_index('data')
+        df = df.rename(columns={'valor': nome})
         return df
+
     except Exception as e:
         st.error(f"Erro ao carregar série {nome}: {e}")
         return pd.DataFrame(columns=[nome])
 
-# Séries do Banco Central
+# Séries SGS
 series_dict = {
     "Selic Meta (%)": 432,
     "IPCA (%)": 433,
     "Câmbio (R$/US$)": 3697
 }
 
-# Caixa de seleção
 opcao = st.selectbox("Selecione a série", list(series_dict.keys()))
-
-# Buscar dados
 df = get_bcb_series(series_dict[opcao], opcao)
 
-# Mostrar resultados
 if not df.empty:
     st.line_chart(df)
     st.subheader("📌 Últimos Dados")
