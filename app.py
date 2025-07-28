@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 
-# Configurações iniciais do app
+# Configuração do painel
 st.set_page_config(page_title="Painel Macroeconômico - BCB", layout="wide")
 st.title("📊 Painel Macroeconômico - Banco Central do Brasil")
 
@@ -11,15 +11,24 @@ def get_bcb_series(codigo, nome):
     url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json"
     try:
         r = requests.get(url, timeout=10)
+        r.raise_for_status()  # gera erro se a resposta não for 200
         data = r.json()
-        if not data:  # se vier vazio
+
+        # Garantir que data é uma lista e contém registros
+        if not isinstance(data, list) or len(data) == 0:
             return pd.DataFrame(columns=[nome])
+
         df = pd.DataFrame(data)
-        df['data'] = pd.to_datetime(df['data'], dayfirst=True)
-        df['valor'] = df['valor'].astype(float)
+        if "data" not in df.columns or "valor" not in df.columns:
+            return pd.DataFrame(columns=[nome])
+
+        df['data'] = pd.to_datetime(df['data'], dayfirst=True, errors='coerce')
+        df['valor'] = pd.to_numeric(df['valor'], errors='coerce')
+        df = df.dropna()
         df = df.set_index('data')
         df = df.rename(columns={'valor': nome})
         return df
+
     except Exception as e:
         st.error(f"Erro ao carregar série {nome}: {e}")
         return pd.DataFrame(columns=[nome])
