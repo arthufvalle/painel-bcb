@@ -39,7 +39,7 @@ def get_bcb_series(codigo, nome):
 # Séries do Banco Central (códigos SGS)
 series_dict = {
     "Selic Meta (%)": 432,
-    "Inflação 12 meses (IPCA)": 4449,
+    "Inflação 12 meses (IPCA)": 13522,
     "Câmbio (R$/US$)": 3697,
     "Consignado - Setor Privado": 21116,
     "Consignado - Setor Público": 21117,
