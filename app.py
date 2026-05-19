@@ -11,27 +11,33 @@ st.title("Painel - Banco Central do Brasil")
 @st.cache_data(ttl=3600)
 def get_bcb_series(codigo, nome, escala_bi=False):
     data_final = datetime.today().strftime("%d/%m/%Y")
-    data_inicial = (datetime.today() - timedelta(days=365*20)).strftime("%d/%m/%Y")
-    url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json&dataInicial={data_inicial}&dataFinal={data_final}"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    try:
-        r = requests.get(url, headers=headers, timeout=20)
-        r.raise_for_status()
-        data = r.json()
-        if not isinstance(data, list) or len(data) == 0:
-            return pd.DataFrame(columns=[nome])
-        df = pd.DataFrame(data)
-        df['data'] = pd.to_datetime(df['data'], dayfirst=True, errors="coerce")
-        df['valor'] = pd.to_numeric(df['valor'], errors="coerce")
-        df = df.dropna()
-        df = df.set_index('data')
-        df = df.rename(columns={'valor': nome})
-        if escala_bi:
-            df = df / 1000.0
-        return df
-    except Exception as e:
-        st.error(f"Erro: {e}")
-        return pd.DataFrame(columns=[nome])
+    anos_lista = [20, 15, 10, 5]
+    df = pd.DataFrame(columns=[nome])
+    for anos in anos_lista:
+        data_inicial = (datetime.today() - timedelta(days=365*anos)).strftime("%d/%m/%Y")
+        url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json&dataInicial={data_inicial}&dataFinal={data_final}"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        try:
+            r = requests.get(url, headers=headers, timeout=20)
+            if r.status_code in [502, 503, 406]:
+                continue
+            r.raise_for_status()
+            data = r.json()
+            if not isinstance(data, list) or len(data) == 0:
+                continue
+            dfr = pd.DataFrame(data)
+            dfr['data'] = pd.to_datetime(dfr['data'], dayfirst=True, errors="coerce")
+            dfr['valor'] = pd.to_numeric(dfr['valor'], errors="coerce")
+            dfr = dfr.dropna()
+            dfr = dfr.set_index('data')
+            dfr = dfr.rename(columns={'valor': nome})
+            if escala_bi:
+                dfr = dfr / 1000.0
+            df = dfr
+            break
+        except Exception:
+            continue
+    return df
 
 def calc_yoy(df):
     if df.empty:
@@ -55,24 +61,6 @@ def _format_layout(fig, titulo, yaxis_fmt=None, yaxis_title=None):
         height=400,
         margin=dict(l=40, r=20, t=60, b=80)
     )
-
-def make_chart(titulo, series_list, yaxis_fmt=None, yaxis_title=None):
-    fig = go.Figure()
-    for codigo, nome, cor in series_list:
-        df = get_bcb_series(codigo, nome)
-        if not df.empty:
-            fig.add_trace(go.Scatter(x=df.index, y=df[nome], name=nome, line=dict(color=cor, width=1.5), mode='lines'))
-    _format_layout(fig, titulo, yaxis_fmt, yaxis_title)
-    return fig
-
-def make_chart_bi(titulo, series_list, yaxis_fmt=None, yaxis_title="R$ bi"):
-    fig = go.Figure()
-    for codigo, nome, cor in series_list:
-        df = get_bcb_series(codigo, nome, escala_bi=True)
-        if not df.empty:
-            fig.add_trace(go.Scatter(x=df.index, y=df[nome], name=nome, line=dict(color=cor, width=1.5), mode='lines'))
-    _format_layout(fig, titulo, yaxis_fmt, yaxis_title)
-    return fig
 
 def make_chart_from_dfs(titulo, df_list, yaxis_fmt=None, yaxis_title=None):
     fig = go.Figure()
