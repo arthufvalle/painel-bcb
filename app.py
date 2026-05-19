@@ -46,6 +46,17 @@ def calc_yoy(df):
     yoy = df_monthly.pct_change(12) * 100
     return yoy
 
+def calc_ratio_pct(df_num, df_den, nome):
+    if df_num.empty or df_den.empty:
+        return pd.DataFrame(columns=[nome])
+    df_n = df_num.resample('MS').last()
+    df_d = df_den.resample('MS').last()
+    combined = df_n.join(df_d, how='inner', rsuffix='_den')
+    col_n = combined.columns[0]
+    col_d = combined.columns[1]
+    result = (combined[col_n] / combined[col_d] * 100).to_frame(name=nome)
+    return result
+
 def _format_layout(fig, titulo, yaxis_fmt=None, yaxis_title=None):
     fig.update_layout(
         title=dict(text=titulo, x=0.5, xanchor='center'),
@@ -365,3 +376,60 @@ fig_t4 = make_chart_from_dfs(
 )
 st.plotly_chart(fig_t4, use_container_width=True)
 export_button({"SFN": df_prov_sfn, "Controle Publico": df_prov_pub, "Controle Privado": df_prov_priv}, "Exportar Provisao")
+
+# =============================================
+# SECAO 4: ENDIVIDAMENTO E CREDITO
+# =============================================
+
+st.markdown("---")
+st.header("Endividamento e Credito")
+
+col_e1, col_e2 = st.columns(2)
+
+with col_e1:
+    df_endiv = get_bcb_series(29037, "Endividamento das Familias")
+    fig_e1 = make_chart_from_dfs(
+        "Endividamento das Familias (% Renda Anual)",
+        [(df_endiv, "Endividamento das Familias", "#1F3864")],
+        yaxis_title="% Renda Anual"
+    )
+    st.plotly_chart(fig_e1, use_container_width=True)
+    export_button({"Endividamento": df_endiv}, "Exportar Endividamento Familias")
+
+with col_e2:
+    df_comprom = get_bcb_series(29038, "Comprometimento Servico Divida")
+    fig_e2 = make_chart_from_dfs(
+        "Comprometimento com Servico da Divida (% Renda Mensal Dessaz)",
+        [(df_comprom, "Comprometimento Servico Divida", "#1F3864")],
+        yaxis_title="% Renda Mensal"
+    )
+    st.plotly_chart(fig_e2, use_container_width=True)
+    export_button({"Comprometimento": df_comprom}, "Exportar Comprometimento Divida")
+
+df_cred_total_raw = get_bcb_series(20631, "Credito Total SFN")
+df_pib = get_bcb_series(4382, "PIB Acumulado 12m")
+df_cred_livre_raw = get_bcb_series(20542, "Credito Livre Total")
+df_cred_dir_raw = get_bcb_series(20539, "Credito Direcionado Total")
+
+df_cred_pib = calc_ratio_pct(df_cred_total_raw, df_pib, "Credito Bancario % PIB")
+fig_e3 = make_chart_from_dfs(
+    "Credito Bancario (% PIB)",
+    [(df_cred_pib, "Credito Bancario % PIB", "#1F3864")],
+    yaxis_title="% PIB"
+)
+st.plotly_chart(fig_e3, use_container_width=True)
+export_button({"Credito % PIB": df_cred_pib}, "Exportar Credito Bancario PIB")
+
+df_livre_pib = calc_ratio_pct(df_cred_livre_raw, df_pib, "Credito livre")
+df_dir_pib = calc_ratio_pct(df_cred_dir_raw, df_pib, "Credito direcionado")
+
+fig_e4 = make_chart_from_dfs(
+    "Credito como % do PIB",
+    [
+        (df_livre_pib, "Credito livre", "#1C1C1C"),
+        (df_dir_pib, "Credito direcionado", "#5BC8E8"),
+    ],
+    yaxis_title="% PIB"
+)
+st.plotly_chart(fig_e4, use_container_width=True)
+export_button({"Credito livre % PIB": df_livre_pib, "Credito direcionado % PIB": df_dir_pib}, "Exportar Credito como PIB")
