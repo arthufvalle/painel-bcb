@@ -304,3 +304,64 @@ _format_layout(fig_s7, "Saldo YoY", "pct", "Variacao YoY (%)")
 st.plotly_chart(fig_s7, use_container_width=True)
 if yoy_dfs_s7:
     export_button(yoy_dfs_s7, "Exportar Saldo YoY G7")
+
+# =============================================
+# SECAO 3: TAXAS, SPREADS E PROVISAO
+# =============================================
+
+st.markdown("---")
+st.header("Taxas, Spreads e Provisao")
+
+col_t1, col_t2 = st.columns(2)
+
+with col_t1:
+    df_spread_pf = get_bcb_series(20809, "Pessoas fisicas")
+    fig_t1 = make_chart_from_dfs(
+        "Spread Livre - Pessoas fisicas",
+        [(df_spread_pf, "Pessoas fisicas", "#808080")],
+        yaxis_title="% a.a."
+    )
+    st.plotly_chart(fig_t1, use_container_width=True)
+    export_button({"Spread PF": df_spread_pf}, "Exportar Spread PF")
+
+with col_t2:
+    df_spread_pj = get_bcb_series(20787, "Pessoas juridicas")
+    fig_t2 = make_chart_from_dfs(
+        "Spread Livre - Pessoas juridicas",
+        [(df_spread_pj, "Pessoas juridicas", "#E07B39")],
+        yaxis_title="% a.a."
+    )
+    st.plotly_chart(fig_t2, use_container_width=True)
+    export_button({"Spread PJ": df_spread_pj}, "Exportar Spread PJ")
+
+df_taxa_pj = get_bcb_series(20714, "PJ")
+df_taxa_total = get_bcb_series(20715, "Total")
+df_taxa_pf = get_bcb_series(20716, "PF")
+
+fig_t3 = make_chart_from_dfs(
+    "Taxas",
+    [
+        (df_taxa_pj, "PJ", "#808080"),
+        (df_taxa_total, "Total", "#E07B39"),
+        (df_taxa_pf, "PF", "#1F4E79"),
+    ],
+    yaxis_title="% a.a."
+)
+st.plotly_chart(fig_t3, use_container_width=True)
+export_button({"PJ": df_taxa_pj, "Total": df_taxa_total, "PF": df_taxa_pf}, "Exportar Taxas")
+
+df_prov_sfn = get_bcb_series(13645, "Sistema Financeiro Nacional")
+df_prov_pub = get_bcb_series(13666, "IFs sob Controle Publico")
+df_prov_priv = get_bcb_series(13672, "IFs sob Controle Privado Nacional")
+
+fig_t4 = make_chart_from_dfs(
+    "% Provisao sobre Carteira de Credito",
+    [
+        (df_prov_sfn, "Sistema Financeiro Nacional", "#1F4E79"),
+        (df_prov_pub, "IFs sob Controle Publico", "#E07B39"),
+        (df_prov_priv, "IFs sob Controle Privado Nacional", "#808080"),
+    ],
+    yaxis_title="% Carteira"
+)
+st.plotly_chart(fig_t4, use_container_width=True)
+export_button({"SFN": df_prov_sfn, "Controle Publico": df_prov_pub, "Controle Privado": df_prov_priv}, "Exportar Provisao")
