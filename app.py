@@ -46,15 +46,17 @@ def calc_yoy(df):
     yoy = df_monthly.pct_change(12) * 100
     return yoy
 
-def calc_ratio_pct(df_num, df_den, nome):
-    if df_num.empty or df_den.empty:
+def calc_credito_pib(df_cred_mi, df_pib_mi, nome):
+    # credito em R$ mi, PIB acumulado 12m em R$ mi
+    # resultado = (credito / PIB) * 100 em %
+    if df_cred_mi.empty or df_pib_mi.empty:
         return pd.DataFrame(columns=[nome])
-    df_n = df_num.resample('MS').last()
-    df_d = df_den.resample('MS').last()
-    combined = df_n.join(df_d, how='inner', rsuffix='_den')
-    col_n = combined.columns[0]
-    col_d = combined.columns[1]
-    result = (combined[col_n] / combined[col_d] * 100).to_frame(name=nome)
+    df_c = df_cred_mi.resample('MS').last()
+    df_p = df_pib_mi.resample('MS').last()
+    combined = df_c.join(df_p, how='inner', rsuffix='_pib')
+    col_c = combined.columns[0]
+    col_p = combined.columns[1]
+    result = (combined[col_c] / combined[col_p] * 100).to_frame(name=nome)
     return result
 
 def _format_layout(fig, titulo, yaxis_fmt=None, yaxis_title=None):
@@ -406,12 +408,18 @@ with col_e2:
     st.plotly_chart(fig_e2, use_container_width=True)
     export_button({"Comprometimento": df_comprom}, "Exportar Comprometimento Divida")
 
-df_cred_total_raw = get_bcb_series(20631, "Credito Total SFN")
+# PIB acumulado 12m (4382) em R$ milhoes
+# Credito total SFN (20631) em R$ milhoes
+# Credito livre (20542) em R$ milhoes
+# Credito direcionado (20539) em R$ milhoes
+# Calculo: (credito_mi / pib_mi) * 100 = % do PIB
+
 df_pib = get_bcb_series(4382, "PIB Acumulado 12m")
+df_cred_total_raw = get_bcb_series(20631, "Credito Total SFN")
 df_cred_livre_raw = get_bcb_series(20542, "Credito Livre Total")
 df_cred_dir_raw = get_bcb_series(20539, "Credito Direcionado Total")
 
-df_cred_pib = calc_ratio_pct(df_cred_total_raw, df_pib, "Credito Bancario % PIB")
+df_cred_pib = calc_credito_pib(df_cred_total_raw, df_pib, "Credito Bancario % PIB")
 fig_e3 = make_chart_from_dfs(
     "Credito Bancario (% PIB)",
     [(df_cred_pib, "Credito Bancario % PIB", "#1F3864")],
@@ -420,8 +428,8 @@ fig_e3 = make_chart_from_dfs(
 st.plotly_chart(fig_e3, use_container_width=True)
 export_button({"Credito % PIB": df_cred_pib}, "Exportar Credito Bancario PIB")
 
-df_livre_pib = calc_ratio_pct(df_cred_livre_raw, df_pib, "Credito livre")
-df_dir_pib = calc_ratio_pct(df_cred_dir_raw, df_pib, "Credito direcionado")
+df_livre_pib = calc_credito_pib(df_cred_livre_raw, df_pib, "Credito livre")
+df_dir_pib = calc_credito_pib(df_cred_dir_raw, df_pib, "Credito direcionado")
 
 fig_e4 = make_chart_from_dfs(
     "Credito como % do PIB",
