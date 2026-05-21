@@ -56,7 +56,7 @@ def calc_credito_pib(df_cred_mi, df_pib_mi, nome):
     combined = df_c.join(df_p, how='inner', rsuffix='_pib')
     col_c = combined.columns[0]
     col_p = combined.columns[1]
-    result = (combined[col_c] / combined[col_p] * 100).to_frame(name=nome)
+    result = (combined[col_c] / combined[col_p] * 1000).to_frame(name=nome)
     return result
 
 def _format_layout(fig, titulo, yaxis_fmt=None, yaxis_title=None):
