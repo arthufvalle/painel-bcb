@@ -415,9 +415,9 @@ with col_e2:
 # Calculo: (credito_mi / pib_mi) * 100 = % do PIB
 
 df_pib = get_bcb_series(4382, "PIB Acumulado 12m")
-df_cred_total_raw = get_bcb_series(20631, "Credito Total SFN")
-df_cred_livre_raw = get_bcb_series(20542, "Credito Livre Total")
-df_cred_dir_raw = get_bcb_series(20539, "Credito Direcionado Total")
+df_cred_total_raw = get_bcb_series(20631, "Credito Total SFN", escala_bi=True)
+df_cred_livre_raw = get_bcb_series(20542, "Credito Livre Total", escala_bi=True)
+df_cred_dir_raw = get_bcb_series(20541, "Credito Direcionado Total", escala_bi=True)
 
 df_cred_pib = calc_credito_pib(df_cred_total_raw, df_pib, "Credito Bancario % PIB")
 fig_e3 = make_chart_from_dfs(
