@@ -52,7 +52,7 @@ def calc_credito_pib(df_cred_mi, df_pib_mi, nome):
     if df_cred_mi.empty or df_pib_mi.empty:
         return pd.DataFrame(columns=[nome])
     df_c = df_cred_mi.resample('MS').last()
-    df_p = df_pib_mi.resample('MS').last()
+    df_p = df_pib_mi.resample('MS').last().rolling(12).sum()
     combined = df_c.join(df_p, how='inner', rsuffix='_pib')
     col_c = combined.columns[0]
     col_p = combined.columns[1]
@@ -414,10 +414,10 @@ with col_e2:
 # Credito direcionado (20539) em R$ milhoes
 # Calculo: (credito_mi / pib_mi) * 100 = % do PIB
 
-df_pib = get_bcb_series(4382, "PIB Acumulado 12m")
-df_cred_total_raw = get_bcb_series(20631, "Credito Total SFN", escala_bi=True)
-df_cred_livre_raw = get_bcb_series(20542, "Credito Livre Total", escala_bi=True)
-df_cred_dir_raw = get_bcb_series(20541, "Credito Direcionado Total", escala_bi=True)
+df_pib = get_bcb_series(4380, "PIB Mensal")
+df_cred_total_raw = get_bcb_series(20631, "Credito Total SFN")
+df_cred_livre_raw = get_bcb_series(20542, "Credito Livre Total")
+df_cred_dir_raw = get_bcb_series(20541, "Credito Direcionado Total")
 
 df_cred_pib = calc_credito_pib(df_cred_total_raw, df_pib, "Credito Bancario % PIB")
 fig_e3 = make_chart_from_dfs(
