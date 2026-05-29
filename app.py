@@ -14,7 +14,7 @@ def get_bcb_series(codigo, nome, escala_bi=False):
     anos_lista = [20, 15, 10, 5]
     df = pd.DataFrame(columns=[nome])
     for anos in anos_lista:
-        data_inicial = (datetime.today() - timedelta(days=365*anos)).strftime(h"%d/%m/%Y")
+        data_inicial = (datetime.today() - timedelta(days=365*anos)).strftime("%d/%m/%Y")
         url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json&dataInicial={data_inicial}&dataFinal={data_final}"
         headers = {"User-Agent": "Mozilla/5.0"}
         try:
